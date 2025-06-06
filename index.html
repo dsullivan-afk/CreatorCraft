@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Craft Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .draggable {
+            cursor: move;
+            user-select: none;
+        }
+        .canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            background: linear-gradient(to bottom right, #e0f2fe, #bae6fd);
+        }
+        .element {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 80px;
+            border-radius: 12px;
+            text-align: center;
+            background-color: #bfdbfe;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2px;
+            line-height: 1.2;
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .element:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .element-text {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            max-height: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar {
+            max-height: 100vh;
+            overflow-y: auto;
+            background-color: #eff6ff;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            margin: 4px;
+            background-color: #dbeafe;
+            border-radius: 8px;
+            width: 140px;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .sidebar-item:hover {
+            background-color: #93c5fd;
+            transform: scale(1.03);
+        }
+        .discoveries-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .discovery-item {
+            padding: 4px;
+            font-size: 12px;
+            font-weight: 400;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+        .discovery-item:nth-child(odd) {
+            background-color: #e5e7eb;
+        }
+        .notification {
+            animation: slideIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .search-bar {
+            padding: 0.5rem;
+        }
+        .search-bar:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-blue-200 to-indigo-200 flex flex-col md:flex-row h-screen">
+    <div class="w-full md:w-1/4 bg-blue-50 p-4 sidebar">
+        <h2 class="text-2xl font-bold mb-4 text-blue-800">Elements</h2>
+        <input type="text" id="search-bar" class="w-full p-2 mb-4 border border-blue-300 rounded-lg search-bar focus:outline-none focus:border-blue-500" placeholder="Search here">
+        <div id="element-list"></div>
+        <div class="mt-4">
+            <button id="toggle-discoveries" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">Show Discoveries</button>
+            <div id="discoveries-list" class="discoveries-list hidden"></div>
+        </div>
+    </div>
+    <div class="w-full md:w-3/4 canvas" id="canvas">
+        <div id="notification" class="absolute top-4 right-4 bg-emerald-500 text-white p-2 rounded-lg shadow-lg notification"></div>
+    </div>
+
+    <script>
+        // Initial elements
+        let elements = [
+            { text: "Water", emoji: "💧" },
+            { text: "Fire", emoji: "🔥" },
+            { text: "Wind", emoji: "🌬️" },
+            { text: "Earth", emoji: "🌍" }
+        ];
+
+        // Expanded emoji list for variety
+        const emojis = [
+            "💧", "🔥", "🌬️", "🌍", "🌱", "🪨", "⚡", "☁️", "🌪️", "🌋",
+            "🌊", "🌞", "🌙", "⭐", "❄️", "🌈", "🌲", "🌵", "🧊", "🍂",
+            "🦁", "🐍", "🐠", "🦋", "🐘", "🌸", "🍎", "🍉", "🍇", "🍄",
+            "⚙️", "🔩", "🛠️", "💡", "🕸️", "🪐", "🌌", "☄️", "🪶", "🎨",
+            "🔔", "🧪", "🔬", "🧬", "⚖️", "🗝️", "🪓", "🔮", "🧿", "🕰️"
+        ];
+
+        // Predefined intuitive recipes
+        const predefinedRecipes = [
+            { first: "Water", second: "Fire", result: "Steam", emoji: "💨" },
+            { first: "Water", second: "Earth", result: "Plant", emoji: "🌱" },
+            { first: "Earth", second: "Earth", result: "Mountain", emoji: "⛰️" },
+            { first: "Plant", second: "Earth", result: "Forest", emoji: "🌲" },
+            { first: "Wind", second: "Fire", result: "Dragonfly", emoji: "🦋" },
+            { first: "Water", second: "Plant", result: "Swamp", emoji: "🐊" },
+            { first: "Fire", second: "Earth", result: "Lava", emoji: "🌋" },
+            { first: "Wind", second: "Earth", result: "Dust", emoji: "🌫️" },
+            { first: "Steam", second: "Fire", result: "Engine", emoji: "⚙️" },
+            { first: "Dust", second: "Wind", result: "Sandstorm", emoji: "🌪️" }
+        ];
+
+        // Possible suffixes for random name generation
+        const suffixes = ["ium", "ite", "storm", "wave", "stone", "fire", "wind", "bloom", "dust", "glow"];
+
+        // Track discoveries and recipes
+        let discoveries = new Set(["Water", "Fire", "Wind", "Earth"]);
+        let recipes = [];
+        let isCombining = false; // Lock to prevent multiple simultaneous combinations
+
+        const canvas = document.getElementById("canvas");
+        const elementList = document.getElementById("element-list");
+        const searchBar = document.getElementById("search-bar");
+        const discoveriesList = document.getElementById("discoveries-list");
+        const toggleDiscoveries = document.getElementById("toggle-discoveries");
+        const notification = document.getElementById("notification");
+
+        // Generate a random but related name, limited to fit square
+        function generateName(first, second) {
+            const maxLength = 10; // Max name length
+            const part1 = first.length > 3 ? first.slice(0, Math.min(3, Math.floor(first.length / 2))) : first;
+            const part2 = second.length > 3 ? second.slice(-Math.min(3, Math.floor(second.length / 2))) : second;
+            const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+            let newName = `${part1}${part2}`;
+            if (newName.length > maxLength - 3) {
+                newName = newName.slice(0, maxLength - 3);
+            }
+            newName = `${newName}${suffix}`.slice(0, maxLength);
+
+            // Ensure uniqueness
+            let counter = 1;
+            let baseName = newName;
+            while (discoveries.has(newName)) {
+                newName = `${baseName.slice(0, maxLength - String(counter).length)}${counter}`;
+                counter++;
+            }
+            return newName;
+        }
+
+        // Get random emoji
+        function getRandomEmoji() {
+            return emojis[Math.floor(Math.random() * emojis.length)];
+        }
+
+        // Render elements in sidebar
+        function renderElements(filter = "") {
+            elementList.innerHTML = "";
+            const filteredElements = elements.filter(el => 
+                el.text.toLowerCase().includes(filter.toLowerCase())
+            );
+            filteredElements.forEach((element, index) => {
+                const div = document.createElement("div");
+                div.className = "sidebar-item draggable";
+                div.draggable = true;
+                div.dataset.element = element.text;
+                div.dataset.emoji = element.emoji;
+                div.innerHTML = `<span class="element-text">${element.emoji} ${element.text}</span>`;
+                div.addEventListener("dragstart", dragStart);
+                elementList.appendChild(div);
+            });
+        }
+
+        // Render discoveries in sidebar
+        function renderDiscoveries() {
+            discoveriesList.innerHTML = "";
+            recipes.forEach((recipe, index) => {
+                const div = document.createElement("div");
+                div.className = "discovery-item";
+                div.textContent = `${recipe.result} = ${recipe.first} + ${recipe.second}`;
+                discoveriesList.appendChild(div);
+            });
+        }
+
+        // Toggle discoveries section
+        toggleDiscoveries.addEventListener("click", () => {
+            const isHidden = discoveriesList.classList.contains("hidden");
+            discoveriesList.classList.toggle("hidden");
+            toggleDiscoveries.textContent = isHidden ? "Hide Discoveries" : "Show Discoveries";
+        });
+
+        // Search bar input handler
+        searchBar.addEventListener("input", (e) => {
+            renderElements(e.target.value);
+        });
+
+        // Drag start handler
+        function dragStart(e) {
+            e.dataTransfer.setData("text/plain", JSON.stringify({
+                element: e.target.dataset.element,
+                emoji: e.target.dataset.emoji
+            }));
+        }
+
+        // Canvas dragover handler
+        canvas.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+
+        // Canvas drop handler
+        canvas.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - 60; // Center wider element
+            const y = e.clientY - rect.top - 40;
+            createElementOnCanvas(data.element, data.emoji, x, y);
+        });
+
+        // Create element on canvas
+        function createElementOnCanvas(element, emoji, x, y) {
+            const div = document.createElement("div");
+            div.className = "element draggable";
+            div.draggable = true;
+            div.dataset.element = element;
+            div.dataset.emoji = emoji;
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+            div.innerHTML = `<span class="element-text">${emoji} ${element}</span>`;
+            div.addEventListener("dragstart", dragStart);
+            div.style.animation = "fadeIn 0.3s ease-in, bounce 0.3s ease-in";
+            canvas.appendChild(div);
+            checkCollisions(div);
+        }
+
+        // Check for collisions between elements
+        function checkCollisions(draggedElement) {
+            if (isCombining) return; // Prevent concurrent collision checks
+            isCombining = true;
+            const elementsOnCanvas = canvas.querySelectorAll(".element");
+            for (let otherElement of elementsOnCanvas) {
+                if (draggedElement !== otherElement && isColliding(draggedElement, otherElement)) {
+                    combineElements(draggedElement, otherElement);
+                    break; // Process only one collision per drop
+                }
+            }
+            isCombining = false;
+        }
+
+        // Check if two elements are colliding
+        function isColliding(el1, el2) {
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+            return !(rect1.right < rect2.left ||
+                     rect1.left > rect2.right ||
+                     rect1.bottom < rect2.top ||
+                     rect1.top > rect2.bottom);
+        }
+
+        // Combine two elements
+        function combineElements(el1, el2) {
+            // Ensure both elements are still children of the canvas
+            if (!canvas.contains(el1) || !canvas.contains(el2)) {
+                return;
+            }
+
+            const first = el1.dataset.element;
+            const second = el2.dataset.element;
+
+            // Check predefined recipes first
+            let recipe = predefinedRecipes.find(
+                (r) => (r.first === first && r.second === second) || (r.first === second && r.second === first)
+            );
+
+            let result, emoji, isNew;
+            if (recipe) {
+                result = recipe.result;
+                emoji = recipe.emoji;
+                isNew = !discoveries.has(result);
+            } else {
+                // Generate random name for new discovery
+                result = generateName(first, second);
+                emoji = getRandomEmoji();
+                isNew = true; // Random combinations are always new discoveries
+            }
+
+            discoveries.add(result);
+            elements.push({ text: result, emoji });
+            recipes.push({ first, second, result, emoji });
+
+            // Center new element between the two
+            const x1 = parseFloat(el1.style.left);
+            const y1 = parseFloat(el1.style.top);
+            const x2 = parseFloat(el2.style.left);
+            const y2 = parseFloat(el2.style.top);
+            const newX = (x1 + x2) / 2;
+            const newY = (y1 + y2) / 2;
+
+            // Remove old elements
+            canvas.removeChild(el1);
+            canvas.removeChild(el2);
+
+            // Create new element
+            createElementOnCanvas(result, emoji, newX, newY);
+
+            // Show notification
+            notification.textContent = isNew ? `First Discovery: ${result}!` : `${result}!`;
+            notification.classList.remove("hidden");
+            setTimeout(() => notification.classList.add("hidden"), 3000);
+
+            // Update sidebar
+            renderElements(searchBar.value);
+            renderDiscoveries();
+        }
+
+        // Initialize
+        renderElements();
+        renderDiscoveries();
+    </script>
+</body>
+</html>
