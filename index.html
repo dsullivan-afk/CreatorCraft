@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,10 +11,12 @@
         body {
             font-family: 'Poppins', sans-serif;
         }
+
         .draggable {
             cursor: move;
             user-select: none;
         }
+
         .canvas {
             position: relative;
             width: 100%;
@@ -21,6 +24,7 @@
             min-height: 400px;
             background: linear-gradient(to bottom right, #e0f2fe, #bae6fd);
         }
+
         .element {
             position: absolute;
             display: flex;
@@ -38,10 +42,12 @@
             transition: transform 0.2s, box-shadow 0.2s;
             animation: fadeIn 0.3s ease-in;
         }
+
         .element:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
+
         .element-text {
             display: inline-flex;
             align-items: center;
@@ -54,11 +60,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .sidebar {
             max-height: 100vh;
             overflow-y: auto;
             background-color: #eff6ff;
         }
+
         .sidebar-item {
             display: flex;
             align-items: center;
@@ -69,15 +77,18 @@
             width: 140px;
             transition: background-color 0.2s, transform 0.2s;
         }
+
         .sidebar-item:hover {
             background-color: #93c5fd;
             transform: scale(1.03);
         }
+
         .discoveries-list {
             max-height: 200px;
             overflow-y: auto;
             margin-top: 1rem;
         }
+
         .discovery-item {
             padding: 4px;
             font-size: 12px;
@@ -86,44 +97,78 @@
             border-radius: 4px;
             margin: 2px 0;
         }
+
         .discovery-item:nth-child(odd) {
             background-color: #e5e7eb;
         }
+
         .notification {
             animation: slideIn 0.3s ease-in;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
+
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
+
         @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
         }
+
         .search-bar {
             padding: 0.5rem;
         }
+
         .search-bar:focus {
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
     </style>
 </head>
+
 <body class="bg-gradient-to-r from-blue-200 to-indigo-200 flex flex-col md:flex-row h-screen">
     <div class="w-full md:w-1/4 bg-blue-50 p-4 sidebar">
         <h2 class="text-2xl font-bold mb-4 text-blue-800">Elements</h2>
-        <input type="text" id="search-bar" class="w-full p-2 mb-4 border border-blue-300 rounded-lg search-bar focus:outline-none focus:border-blue-500" placeholder="Search here">
+        <input type="text" id="search-bar"
+            class="w-full p-2 mb-4 border border-blue-300 rounded-lg search-bar focus:outline-none focus:border-blue-500"
+            placeholder="Search here">
         <div id="element-list"></div>
         <div class="mt-4">
-            <button id="toggle-discoveries" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">Show Discoveries</button>
+            <button id="toggle-discoveries"
+                class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">Show
+                Discoveries</button>
             <div id="discoveries-list" class="discoveries-list hidden"></div>
         </div>
     </div>
     <div class="w-full md:w-3/4 canvas" id="canvas">
-        <div id="notification" class="absolute top-4 right-4 bg-emerald-500 text-white p-2 rounded-lg shadow-lg notification"></div>
+        <div id="notification"
+            class="absolute top-4 right-4 bg-emerald-500 text-white p-2 rounded-lg shadow-lg notification"></div>
     </div>
 
     <script>
@@ -155,7 +200,57 @@
             { first: "Fire", second: "Earth", result: "Lava", emoji: "🌋" },
             { first: "Wind", second: "Earth", result: "Dust", emoji: "🌫️" },
             { first: "Steam", second: "Fire", result: "Engine", emoji: "⚙️" },
-            { first: "Dust", second: "Wind", result: "Sandstorm", emoji: "🌪️" }
+            { first: "Dust", second: "Wind", result: "Sandstorm", emoji: "🌪️" },
+            { first: "Fire", second: "Plant", result: "Ash", emoji: "🕳️" },
+            { first: "Water", second: "Wind", result: "Storm", emoji: "🌧️" },
+            { first: "Lava", second: "Water", result: "Stone", emoji: "🪨" },
+            { first: "Mountain", second: "Wind", result: "Cliff", emoji: "🧗" },
+            { first: "Steam", second: "Wind", result: "Cloud", emoji: "☁️" },
+            { first: "Fire", second: "Dust", result: "Smoke", emoji: "💨" },
+            { first: "Forest", second: "Fire", result: "Wildfire", emoji: "🔥" },
+            { first: "Plant", second: "Water", result: "Algae", emoji: "🪸" },
+            { first: "Earth", second: "Swamp", result: "Mud", emoji: "🪵" },
+            { first: "Cloud", second: "Water", result: "Rain", emoji: "🌧️" },
+            { first: "Air", second: "Fire", result: "Heat", emoji: "🔥" },
+            { first: "Earth", second: "Air", result: "Dust", emoji: "🌫️" },
+            { first: "Water", second: "Earth", result: "Mud", emoji: "🪵" },
+            { first: "Fire", second: "Water", result: "Steam", emoji: "💨" },
+            { first: "Wind", second: "Earth", result: "Dust", emoji: "🌫️" },
+            { first: "Steam", second: "Fire", result: "Engine", emoji: "⚙️" },
+            { first: "Dust", second: "Wind", result: "Sandstorm", emoji: "🌪️" },
+            { first: "Fire", second: "Plant", result: "Ash", emoji: "🕳️" },
+            { first: "Water", second: "Wind", result: "Storm", emoji: "🌧️" },
+            { first: "Lava", second: "Water", result: "Stone", emoji: "🪨" },
+            { first: "Mountain", second: "Wind", result: "Cliff", emoji: "🧗" },
+            { first: "Steam", second: "Wind", result: "Cloud", emoji: "☁️" },
+            { first: "Fire", second: "Dust", result: "Smoke", emoji: "💨" },
+            { first: "Forest", second: "Fire", result: "Wildfire", emoji: "🔥" },
+            { first: "Plant", second: "Water", result: "Algae", emoji: "🪸" },
+            { first: "Earth", second: "Swamp", result: "Mud", emoji: "🪵" },
+            { first: "Cloud", second: "Water", result: "Rain", emoji: "🌧️" },
+            { first: "Air", second: "Fire", result: "Heat", emoji: "🔥" },
+            { first: "Earth", second: "Air", result: "Dust", emoji: "🌫️" },
+            { first: "Water", second: "Earth", result: "Mud", emoji: "🪵" },
+            { first: "Fire", second: "Water", result: "Steam", emoji: "💨" },
+            { first: "Wind", second: "Earth", result: "Dust", emoji: "🌫️" },
+            { first: "Steam", second: "Fire", result: "Engine", emoji: "⚙️" },
+            { first: "Dust", second: "Wind", result: "Sandstorm", emoji: "🌪️" },
+            { first: "Fire", second: "Plant", result: "Ash", emoji: "🕳️" },
+            { first: "Water", second: "Wind", result: "Storm", emoji: "🌧️" },
+            { first: "Lava", second: "Water", result: "Stone", emoji: "🪨" },
+            { first: "Mountain", second: "Wind", result: "Cliff", emoji: "🧗" },
+            { first: "Steam", second: "Wind", result: "Cloud", emoji: "☁️" },
+            { first: "Fire", second: "Dust", result: "Smoke", emoji: "💨" },
+            { first: "Forest", second: "Fire", result: "Wildfire", emoji: "🔥" },
+            { first: "Plant", second: "Water", result: "Algae", emoji: "🪸" },
+            { first: "Earth", second: "Swamp", result: "Mud", emoji: "🪵" },
+            { first: "Cloud", second: "Water", result: "Rain", emoji: "🌧️" },
+            { first: "Air", second: "Fire", result: "Heat", emoji: "🔥" },
+            { first: "Earth", second: "Air", result: "Dust", emoji: "🌫️" },
+            { first: "Water", second: "Earth", result: "Mud", emoji: "🪵" },
+            { first: "Fire", second: "Water", result: "Steam", emoji: "💨" },
+            { first: "Wind", second: "Earth", result: "Dust", emoji: "🌫️" },
+            { first: "Steam", second: "Fire", result: "Engine", emoji: "⚙️" },
         ];
 
         // Possible suffixes for random name generation
@@ -203,7 +298,7 @@
         // Render elements in sidebar
         function renderElements(filter = "") {
             elementList.innerHTML = "";
-            const filteredElements = elements.filter(el => 
+            const filteredElements = elements.filter(el =>
                 el.text.toLowerCase().includes(filter.toLowerCase())
             );
             filteredElements.forEach((element, index) => {
@@ -299,9 +394,9 @@
             const rect1 = el1.getBoundingClientRect();
             const rect2 = el2.getBoundingClientRect();
             return !(rect1.right < rect2.left ||
-                     rect1.left > rect2.right ||
-                     rect1.bottom < rect2.top ||
-                     rect1.top > rect2.bottom);
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom);
         }
 
         // Combine two elements
@@ -365,4 +460,5 @@
         renderDiscoveries();
     </script>
 </body>
+
 </html>
